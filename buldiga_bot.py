@@ -9,7 +9,7 @@ bot = TeleBot(config.TOKEN)
 
 
 def parse_matches():
-    url = 'https://game-tournaments.com/dota-2/matches?tid=7346'
+    url = 'https://game-tournaments.com/dota-2/matches?tid=3659'
 
     r = get(url, headers=config.HEADERS)
 
@@ -82,35 +82,39 @@ def help_answer(message):
 
 @bot.message_handler(func=lambda x: x.text == 'Показать матчи')
 def view_matches(message):
-    for i in parse_matches():
-        if 'TBD' in i:
-            continue
-        else:
-            choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
-            left = types.InlineKeyboardButton(text='П1',
-                                              callback_data='p1')
-            right = types.InlineKeyboardButton(text='П2',
-                                               callback_data='p2')
-            drow = types.InlineKeyboardButton(text='X',
-                                              callback_data='x')
-            choice_keyboard.add(left, drow, right)
-            bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
-
-    with connect('aboba.db') as db:
-        cur = db.cursor()
-
-        a = cur.execute('SELECT matches FROM users')
-        a = a.fetchall()
-        db = list()
-        for i in a:
-            for j in i:
-                db.append(j)
-
+    try:
         for i in parse_matches():
             if 'TBD' in i:
                 continue
-            elif i not in db:
-                cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
+            else:
+                choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
+                left = types.InlineKeyboardButton(text='П1',
+                                                  callback_data='p1')
+                right = types.InlineKeyboardButton(text='П2',
+                                                   callback_data='p2')
+                drow = types.InlineKeyboardButton(text='X',
+                                                  callback_data='x')
+                choice_keyboard.add(left, drow, right)
+                bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
+
+        with connect('aboba.db') as db:
+            cur = db.cursor()
+
+            a = cur.execute('SELECT matches FROM users')
+            a = a.fetchall()
+            db = list()
+            for i in a:
+                for j in i:
+                    db.append(j)
+
+            for i in parse_matches():
+                if 'TBD' in i:
+                    continue
+                elif i not in db:
+                    cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
+    except IndexError:
+        bot.send_message(message.chat.id,
+                         'К сожалению игра уже началась(\nДождитесь окончания матча и попробуйте снова')
 
 
 @bot.callback_query_handler(func=lambda callback: callback.data)
