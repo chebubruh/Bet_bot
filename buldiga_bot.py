@@ -124,14 +124,31 @@ def callback_check(callback):
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id,
                               text=f'В матче: {split_teams[0]} vs {split_teams[2]}\n<b>Ты поставил на победу {split_teams[0]}</b>',
                               parse_mode='HTML')
+
+        with connect('aboba.db') as db:
+            cur = db.cursor()
+            cur.execute(
+                f"UPDATE users SET '{callback.from_user.first_name}' = 'P1' WHERE matches == '{callback.message.text}'")
+
     elif callback.data == 'p2':
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id,
                               text=f'В матче: {split_teams[0]} vs {split_teams[2]}\n<b>Ты поставил на победу {split_teams[2]}</b>',
                               parse_mode='HTML')
+
+        with connect('aboba.db') as db:
+            cur = db.cursor()
+            cur.execute(
+                f"UPDATE users SET '{callback.from_user.first_name}' = 'P2' WHERE matches == '{callback.message.text}'")
+
     else:
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id,
                               text=f'В матче: {split_teams[0]} vs {split_teams[2]}\n<b>Ты поставил на ничью</b>',
                               parse_mode='HTML')
+
+        with connect('aboba.db') as db:
+            cur = db.cursor()
+            cur.execute(
+                f"UPDATE users SET '{callback.from_user.first_name}' = 'X' WHERE matches == '{callback.message.text}'")
 
 
 bot.polling(True)
