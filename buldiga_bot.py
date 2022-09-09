@@ -82,54 +82,39 @@ def help_answer(message):
 
 @bot.message_handler(func=lambda x: x.text == 'Показать матчи')
 def view_matches(message):
-    sum_matches = 0
-    sum_bets = 0
-    with connect('aboba.db') as db:
-        cur = db.cursor()
-        for i in cur.execute("SELECT count(matches) FROM users"):
-            for j in i:
-                sum_matches += j
+    try:
+        with connect('aboba.db') as db:
+            cur = db.cursor()
+            a = cur.execute('SELECT matches FROM users')
+            a = a.fetchall()
+            db = list()
 
-        for i in cur.execute(f"SELECT count({message.from_user.first_name}) FROM users"):
-            for j in i:
-                sum_bets += j
+            for i in a:
+                for j in i:
+                    db.append(j)
 
-    if sum_matches != sum_bets or (sum_matches == 0 and sum_bets == 0):
-        try:
             for i in parse_matches():
                 if 'TBD' in i:
                     continue
-                else:
+                elif i not in db:
                     choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
                     left = types.InlineKeyboardButton(text='П1',
-                                                      callback_data='p1')
+                                                        callback_data='p1')
                     right = types.InlineKeyboardButton(text='П2',
-                                                       callback_data='p2')
+                                                        callback_data='p2')
                     drow = types.InlineKeyboardButton(text='X',
-                                                      callback_data='x')
+                                                        callback_data='x')
                     choice_keyboard.add(left, drow, right)
                     bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
 
-            with connect('aboba.db') as db:
-                cur = db.cursor()
-
-                a = cur.execute('SELECT matches FROM users')
-                a = a.fetchall()
-                db = list()
-                for i in a:
-                    for j in i:
-                        db.append(j)
-
-                for i in parse_matches():
-                    if 'TBD' in i:
-                        continue
-                    elif i not in db:
-                        cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
-        except IndexError:
-            bot.send_message(message.chat.id,
-                             'К сожалению игра уже началась(\nДождитесь окончания матча и попробуйте снова')
-    else:
-        bot.send_message(message.chat.id, 'Ставки сделаны, ставок больше нет!')
+            for i in parse_matches():
+                if 'TBD' in i:
+                    continue
+                elif i not in db:
+                    cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
+    except IndexError:
+        bot.send_message(message.chat.id,
+                            'К сожалению игра уже началась(\nДождитесь окончания матча и попробуйте снова')
 
 
 @bot.callback_query_handler(func=lambda callback: callback.data)
