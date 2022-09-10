@@ -37,11 +37,19 @@ def parse_matches():
     a = 0
 
     res_blyat = list()
+    res_blyat2 = list()
 
     for i in range(len(res_team1) // 2):
         res_blyat.append(f'{res_team1[a]} vs {res_team1[a + (len(res_team1) // 2)]} (Дата: {res_date[a][0:10]})')
         a += 1
-    return res_blyat
+
+    for i in res_blyat:
+        if 'TBD' in i:
+            continue
+        else:
+            res_blyat2.append(i)
+
+    return res_blyat2
 
 
 @bot.message_handler(commands=['start'])
@@ -95,9 +103,7 @@ def view_matches(message):
                     db.append(j)
 
             for i in parse_matches():
-                if 'TBD' in i:
-                    continue
-                elif i in db:
+                if i in db:
                     flag = True
                 elif i not in db:
                     choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
