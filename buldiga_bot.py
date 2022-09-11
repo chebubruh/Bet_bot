@@ -52,6 +52,86 @@ def parse_matches():
     return res_blyat2
 
 
+def parse_matches_res():
+    url = 'https://game-tournaments.com/dota-2/matches?tid=3659'
+
+    r = get(url, headers=config.HEADERS)
+
+    soup = BeautifulSoup(r.text, 'lxml')
+    data = soup.find('div', id='block_matches_past')
+    data_res = data.findAll('span', class_='mbutton')
+    res_score = list()
+    for i in data_res:
+        i = i.get('data-score')
+        if i[0] < i[4]:
+            res_score.append('P2')
+        elif i[0] > i[4]:
+            res_score.append('P1')
+        else:
+            res_score.append('X')
+    return res_score
+
+
+def parse_matches_past():
+    url = 'https://game-tournaments.com/dota-2/matches?tid=3659'
+
+    r = get(url, headers=config.HEADERS)
+
+    soup = BeautifulSoup(r.text, 'lxml')
+    data = soup.find('div', id='block_matches_past')
+    team1 = data.findAll('span', class_='teamname c1')
+    team2 = data.findAll('span', class_='teamname c2')
+    date = data.findAll('span', class_='sct')
+
+    res_team1 = list()
+    res_date = list()
+
+    for i in team1:
+        i = i.text.replace('\n', '')
+        res_team1.append(i)
+
+    for i in team2:
+        i = i.text.replace('\n', '')
+        res_team1.append(i)
+
+    for i in date:
+        i = i.text.replace('\n', '')
+        res_date.append(i)
+
+    a = 0
+
+    res_blyat = list()
+    res_blyat2 = list()
+
+    for i in range(len(res_team1) // 2):
+        res_blyat.append(f'{res_team1[a]} vs {res_team1[a + (len(res_team1) // 2)]} (Дата: {res_date[a][0:10]})')
+        a += 1
+
+    for i in res_blyat:
+        if 'TBD' in i:
+            continue
+        else:
+            res_blyat2.append(i)
+
+    return res_blyat2
+
+
+def update():
+    with connect('aboba.db') as db:
+        cur = db.cursor()
+        match = cur.execute("SELECT matches FROM users")
+        a = list()
+        for i in match:
+            for j in i:
+                a.append(j)
+
+        for i in parse_matches_past():
+            if i in a:
+                index = parse_matches_past().index(i)
+                cur.execute(f"UPDATE users SET 'result' = '{parse_matches_res()[index]}' WHERE matches == '{i}'")
+    print('обновление данных прошло успешно!')
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     general_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
@@ -120,6 +200,8 @@ def view_matches(message):
 
             if flag:
                 bot.send_message(message.chat.id, 'Ставки сделаны!\nСтавок больше нет!')
+
+        update()
     except IndexError:
         bot.send_message(message.chat.id,
                          'К сожалению игра уже началась(\nДождитесь окончания матча и попробуйте снова')
