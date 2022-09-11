@@ -216,8 +216,6 @@ def view_matches(message):
             a = cur.execute('SELECT matches FROM users')
             a = a.fetchall()
             db = list()
-            flag = False
-            user = message.from_user.first_name
 
             for i in a:
                 for j in i:
@@ -226,33 +224,33 @@ def view_matches(message):
             for i in parse_matches():
                 if i not in db:
                     cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
-
             update()
-
-            z = cur.execute(f'SELECT matches, {user} FROM users')
-            for i in z:
-                if i[1] != None:
-                    flag = True
-                elif i[1] == None:
-                    choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
-                    left = types.InlineKeyboardButton(text='П1',
-                                                      callback_data='p1')
-                    right = types.InlineKeyboardButton(text='П2',
-                                                       callback_data='p2')
-                    drow = types.InlineKeyboardButton(text='X',
-                                                      callback_data='x')
-                    choice_keyboard.add(left, drow, right)
-                    bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
-                    flag = False
-
-            if flag:
-                bot.send_message(message.chat.id, 'Ставки сделаны!\nСтавок больше нет!')
-
-
     except IndexError:
-        bot.send_message(message.chat.id,
-                         'К сожалению игра уже началась(\nДождитесь окончания матча и попробуйте снова')
         update()
+
+    with connect('aboba.db') as db:
+        cur = db.cursor()
+        flag = False
+        user = message.from_user.first_name
+
+        z = cur.execute(f'SELECT matches, {user} FROM users')
+        for i in z:
+            if i[1] != None:
+                flag = True
+            elif i[1] == None:
+                choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
+                left = types.InlineKeyboardButton(text='П1',
+                                                  callback_data='p1')
+                right = types.InlineKeyboardButton(text='П2',
+                                                   callback_data='p2')
+                drow = types.InlineKeyboardButton(text='X',
+                                                  callback_data='x')
+                choice_keyboard.add(left, drow, right)
+                bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
+                flag = False
+
+    if flag:
+        bot.send_message(message.chat.id, 'Ставки сделаны!\nСтавок больше нет!')
 
 
 @bot.callback_query_handler(func=lambda callback: callback.data)
