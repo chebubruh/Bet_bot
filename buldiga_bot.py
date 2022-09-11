@@ -17,10 +17,10 @@ def parse_matches():
     data = soup.find('div', id='block_matches_current')
     team1 = data.findAll('span', class_='teamname c1')
     team2 = data.findAll('span', class_='teamname c2')
-    date = data.findAll('span', class_='sct')
+    # date = data.findAll('span', class_='sct')
 
     res_team1 = list()
-    res_date = list()
+    # res_date = list()
 
     for i in team1:
         i = i.text.replace('\n', '')
@@ -30,9 +30,9 @@ def parse_matches():
         i = i.text.replace('\n', '')
         res_team1.append(i)
 
-    for i in date:
-        i = i.text.replace('\n', '')
-        res_date.append(i)
+    # for i in date:
+    #     i = i.text.replace('\n', '')
+    #     res_date.append(i)
 
     a = 0
 
@@ -40,7 +40,7 @@ def parse_matches():
     res_blyat2 = list()
 
     for i in range(len(res_team1) // 2):
-        res_blyat.append(f'{res_team1[a]} vs {res_team1[a + (len(res_team1) // 2)]} (Дата: {res_date[a][0:10]})')
+        res_blyat.append(f'{res_team1[a]} vs {res_team1[a + (len(res_team1) // 2)]}')
         a += 1
 
     for i in res_blyat:
@@ -81,10 +81,10 @@ def parse_matches_past():
     data = soup.find('div', id='block_matches_past')
     team1 = data.findAll('span', class_='teamname c1')
     team2 = data.findAll('span', class_='teamname c2')
-    date = data.findAll('span', class_='sct')
+    # date = data.findAll('span', class_='sct')
 
     res_team1 = list()
-    res_date = list()
+    # res_date = list()
 
     for i in team1:
         i = i.text.replace('\n', '')
@@ -94,9 +94,9 @@ def parse_matches_past():
         i = i.text.replace('\n', '')
         res_team1.append(i)
 
-    for i in date:
-        i = i.text.replace('\n', '')
-        res_date.append(i)
+    # for i in date:
+    #     i = i.text.replace('\n', '')
+    #     res_date.append(i)
 
     a = 0
 
@@ -104,7 +104,7 @@ def parse_matches_past():
     res_blyat2 = list()
 
     for i in range(len(res_team1) // 2):
-        res_blyat.append(f'{res_team1[a]} vs {res_team1[a + (len(res_team1) // 2)]} (Дата: {res_date[a][0:10]})')
+        res_blyat.append(f'{res_team1[a]} vs {res_team1[a + (len(res_team1) // 2)]}')
         a += 1
 
     for i in res_blyat:
@@ -205,6 +205,7 @@ def view_matches(message):
     except IndexError:
         bot.send_message(message.chat.id,
                          'К сожалению игра уже началась(\nДождитесь окончания матча и попробуйте снова')
+        update()
 
 
 @bot.callback_query_handler(func=lambda callback: callback.data)
