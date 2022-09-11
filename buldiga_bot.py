@@ -129,15 +129,15 @@ def update():
             if i in a:
                 index = parse_matches_past().index(i)
                 cur.execute(f"UPDATE users SET 'result' = '{parse_matches_res()[index]}' WHERE matches == '{i}'")
-    print('обновление данных прошло успешно!')
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    general_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     matches = types.KeyboardButton(text='Показать матчи')
     help = types.KeyboardButton(text='🆘 Подсказка 🆘')
-    general_keyboard.add(matches, help)
+    table = types.KeyboardButton(text='📈 Таблица булдыг')
+    general_keyboard.add(help, table, matches)
     bot.send_message(message.chat.id, 'Здравствуте, я бот, созданный по лучшему в мире ТЗ!',
                      reply_markup=general_keyboard)
     with connect('aboba.db') as db:
@@ -148,6 +148,45 @@ def start(message):
             name_list.append(i[1])
         if message.from_user.first_name not in name_list:
             cur.execute(f"ALTER TABLE users ADD COLUMN'{message.from_user.first_name}' 'TEXT'")
+            cur.execute(f"INSERT INTO points (name) VALUES ('{message.from_user.first_name}')")
+
+
+@bot.message_handler(func=lambda x: x.text == '📈 Таблица булдыг')
+def points(message):
+    with connect('aboba.db') as db:
+        cur = db.cursor()
+        user = message.from_user.first_name
+
+        points = cur.execute(f"SELECT score FROM points WHERE name == '{user}'")
+        for i in points:
+            for j in i:
+                points = j
+
+        a = cur.execute(f"SELECT matches, result, {user} FROM users")
+        a = a.fetchall()
+        for i in a:
+            if i[1] == 'P2' or i[1] == 'P1' or i[1] == 'X':
+                if i[1] == i[2]:
+                    points += 1
+                    cur.execute(f"UPDATE users SET '{user}' = '{i[2]}*' WHERE matches == '{i[0]}'")
+
+        cur.execute(f"UPDATE points SET 'score' = '{points}' WHERE name == '{user}'")
+
+    with connect('aboba.db') as db:
+        cur = db.cursor()
+
+        res = list()
+        num = 1
+        name_str = ''
+
+        a = cur.execute("SELECT name, score FROM points ORDER BY score DESC")
+        for i in a:
+            res.append(f'{num}. {i[0]} ({i[1]} баллов)')
+            num += 1
+
+        for i in res:
+            name_str += f'{i}\n'
+        bot.send_message(message.chat.id, name_str)
 
 
 @bot.message_handler(func=lambda x: x.text == '🆘 Подсказка 🆘')
@@ -158,10 +197,11 @@ def help(message):
 
 
 def help_answer(message):
-    general_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     matches = types.KeyboardButton(text='Показать матчи')
     help = types.KeyboardButton(text='🆘 Подсказка 🆘')
-    general_keyboard.add(matches, help)
+    table = types.KeyboardButton(text='📈 Таблица булдыг')
+    general_keyboard.add(help, table, matches)
     list_answer = message.text.split(',')
     answer = choice(list_answer)
     bot.send_message(message.chat.id, f'Я бы на твоем месте поставил на <b>{answer}</b>', parse_mode='HTML',
@@ -177,15 +217,23 @@ def view_matches(message):
             a = a.fetchall()
             db = list()
             flag = False
+            user = message.from_user.first_name
 
             for i in a:
                 for j in i:
                     db.append(j)
 
             for i in parse_matches():
-                if i in db:
+                if i not in db:
+                    cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
+
+            update()
+
+            z = cur.execute(f'SELECT matches, {user} FROM users')
+            for i in z:
+                if i[1] != None:
                     flag = True
-                elif i not in db:
+                elif i[1] == None:
                     choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
                     left = types.InlineKeyboardButton(text='П1',
                                                       callback_data='p1')
@@ -194,14 +242,13 @@ def view_matches(message):
                     drow = types.InlineKeyboardButton(text='X',
                                                       callback_data='x')
                     choice_keyboard.add(left, drow, right)
-                    cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
                     bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
                     flag = False
 
             if flag:
                 bot.send_message(message.chat.id, 'Ставки сделаны!\nСтавок больше нет!')
 
-        update()
+
     except IndexError:
         bot.send_message(message.chat.id,
                          'К сожалению игра уже началась(\nДождитесь окончания матча и попробуйте снова')
