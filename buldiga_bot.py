@@ -153,6 +153,7 @@ def start(message):
 
 @bot.message_handler(func=lambda x: x.text == '📈 Таблица булдыг')
 def points(message):
+    update()
     with connect('aboba.db') as db:
         cur = db.cursor()
         user = message.from_user.first_name
@@ -224,9 +225,8 @@ def view_matches(message):
             for i in parse_matches():
                 if i not in db:
                     cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
-        update()
     except IndexError:
-        update()
+        pass
 
     with connect('aboba.db') as db:
         cur = db.cursor()
@@ -251,6 +251,25 @@ def view_matches(message):
 
     if flag:
         bot.send_message(message.chat.id, 'Ставки сделаны!\nСтавок больше нет!')
+
+    with connect('aboba.db') as db:
+        cur = db.cursor()
+        user = message.from_user.first_name
+
+        points = cur.execute(f"SELECT score FROM points WHERE name == '{user}'")
+        for i in points:
+            for j in i:
+                points = j
+
+        a = cur.execute(f"SELECT matches, result, {user} FROM users")
+        a = a.fetchall()
+        for i in a:
+            if i[1] == 'P2' or i[1] == 'P1' or i[1] == 'X':
+                if i[1] == i[2]:
+                    points += 1
+                    cur.execute(f"UPDATE users SET '{user}' = '{i[2]}*' WHERE matches == '{i[0]}'")
+
+        cur.execute(f"UPDATE points SET 'score' = '{points}' WHERE name == '{user}'")
 
 
 @bot.callback_query_handler(func=lambda callback: callback.data)
