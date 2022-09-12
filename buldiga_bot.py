@@ -224,7 +224,7 @@ def view_matches(message):
             for i in parse_matches():
                 if i not in db:
                     cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
-            update()
+        update()
     except IndexError:
         update()
 
