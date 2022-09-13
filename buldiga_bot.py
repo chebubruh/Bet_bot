@@ -153,7 +153,10 @@ def start(message):
 
 @bot.message_handler(func=lambda x: x.text == '📈 Таблица булдыг')
 def points(message):
-    update()
+    try:
+        update()
+    except:
+        pass
     with connect('aboba.db') as db:
         cur = db.cursor()
         user = message.from_user.first_name
@@ -225,7 +228,7 @@ def view_matches(message):
             for i in parse_matches():
                 if i not in db:
                     cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
-    except IndexError:
+    except:
         pass
 
     with connect('aboba.db') as db:
