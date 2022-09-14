@@ -133,13 +133,6 @@ def update():
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-    matches = types.KeyboardButton(text='Показать матчи')
-    help = types.KeyboardButton(text='🆘 Подсказка 🆘')
-    table = types.KeyboardButton(text='📈 Таблица булдыг')
-    general_keyboard.add(help, table, matches)
-    bot.send_message(message.chat.id, 'Здравствуте, я бот, созданный по лучшему в мире ТЗ!',
-                     reply_markup=general_keyboard)
     with connect('aboba.db') as db:
         cur = db.cursor()
         a = cur.execute('pragma table_info(users)')
@@ -150,13 +143,36 @@ def start(message):
             cur.execute(f"ALTER TABLE users ADD COLUMN'{message.from_user.first_name}' 'TEXT'")
             cur.execute(f"INSERT INTO points (name) VALUES ('{message.from_user.first_name}')")
 
+    if message.chat.id == 481695072:
+        general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+        matches = types.KeyboardButton(text='Показать матчи')
+        help = types.KeyboardButton(text='🆘 Подсказка 🆘')
+        table = types.KeyboardButton(text='📈 Таблица булдыг')
+        res = types.KeyboardButton(text='🆙 Обновить результаты матчей')
+        general_keyboard.add(help, table, res, matches)
+        bot.send_message(message.chat.id, 'Дарова булдыга, я бот, созданный по лучшему в мире ТЗ!',
+                         reply_markup=general_keyboard)
+    else:
+        general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+        matches = types.KeyboardButton(text='Показать матчи')
+        help = types.KeyboardButton(text='🆘 Подсказка 🆘')
+        table = types.KeyboardButton(text='📈 Таблица булдыг')
+        general_keyboard.add(help, table, matches)
+        bot.send_message(message.chat.id, 'Дарова булдыга, я бот, созданный по лучшему в мире ТЗ!',
+                         reply_markup=general_keyboard)
+
+
+@bot.message_handler(func=lambda x: x.text == '🆙 Обновить результаты матчей')
+def for_me(message):
+    if message.chat.id == 481695072:
+        try:
+            update()
+            bot.send_message(481695072, 'Результаты матчей обновлены')
+        except:
+            bot.send_message(481695072, 'Сайт упал, обновление невозможно')
 
 @bot.message_handler(func=lambda x: x.text == '📈 Таблица булдыг')
 def points(message):
-    try:
-        update()
-    except:
-        pass
     with connect('aboba.db') as db:
         cur = db.cursor()
         user = message.from_user.first_name
@@ -201,15 +217,27 @@ def help(message):
 
 
 def help_answer(message):
-    general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-    matches = types.KeyboardButton(text='Показать матчи')
-    help = types.KeyboardButton(text='🆘 Подсказка 🆘')
-    table = types.KeyboardButton(text='📈 Таблица булдыг')
-    general_keyboard.add(help, table, matches)
-    list_answer = message.text.split(',')
-    answer = choice(list_answer)
-    bot.send_message(message.chat.id, f'Я бы на твоем месте поставил на <b>{answer}</b>', parse_mode='HTML',
-                     reply_markup=general_keyboard)
+    if message.chat.id == 481695072:
+        general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+        matches = types.KeyboardButton(text='Показать матчи')
+        help = types.KeyboardButton(text='🆘 Подсказка 🆘')
+        table = types.KeyboardButton(text='📈 Таблица булдыг')
+        res = types.KeyboardButton(text='🆙 Обновить результаты матчей')
+        general_keyboard.add(help, table, res, matches)
+        list_answer = message.text.split(',')
+        answer = choice(list_answer)
+        bot.send_message(message.chat.id, f'Я бы на твоем месте поставил на <b>{answer}</b>', parse_mode='HTML',
+                         reply_markup=general_keyboard)
+    else:
+        general_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+        matches = types.KeyboardButton(text='Показать матчи')
+        help = types.KeyboardButton(text='🆘 Подсказка 🆘')
+        table = types.KeyboardButton(text='📈 Таблица булдыг')
+        general_keyboard.add(help, table, matches)
+        list_answer = message.text.split(',')
+        answer = choice(list_answer)
+        bot.send_message(message.chat.id, f'Я бы на твоем месте поставил на <b>{answer}</b>', parse_mode='HTML',
+                         reply_markup=general_keyboard)
 
 
 @bot.message_handler(func=lambda x: x.text == 'Показать матчи')
