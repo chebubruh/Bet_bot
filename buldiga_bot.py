@@ -9,7 +9,7 @@ bot = TeleBot(config.TOKEN)
 
 
 def parse_matches():
-    url = 'https://game-tournaments.com/dota-2/matches?tid=3659'
+    url = 'https://game-tournaments.com/dota-2/matches?tid=7354'
 
     r = get(url, headers=config.HEADERS)
 
@@ -53,7 +53,7 @@ def parse_matches():
 
 
 def parse_matches_res():
-    url = 'https://game-tournaments.com/dota-2/matches?tid=3659'
+    url = 'https://game-tournaments.com/dota-2/matches?tid=7354'
 
     r = get(url, headers=config.HEADERS)
 
@@ -73,7 +73,7 @@ def parse_matches_res():
 
 
 def parse_matches_past():
-    url = 'https://game-tournaments.com/dota-2/matches?tid=3659'
+    url = 'https://game-tournaments.com/dota-2/matches?tid=7354'
 
     r = get(url, headers=config.HEADERS)
 
@@ -171,6 +171,7 @@ def for_me(message):
         except:
             bot.send_message(481695072, 'Сайт упал, обновление невозможно')
 
+
 @bot.message_handler(func=lambda x: x.text == '📈 Таблица булдыг')
 def points(message):
     with connect('aboba.db') as db:
@@ -242,50 +243,56 @@ def help_answer(message):
 
 @bot.message_handler(func=lambda x: x.text == 'Показать матчи')
 def view_matches(message):
+    matches_from_site = list()
+    # парсит матчи и заносит их в бд, если их там нет
     try:
-        with connect('aboba.db') as db:
-            cur = db.cursor()
-            a = cur.execute('SELECT matches FROM users')
-            a = a.fetchall()
-            db = list()
-
-            for i in a:
-                for j in i:
-                    db.append(j)
-
-            for i in parse_matches():
-                if i not in db:
-                    cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
+        for i in parse_matches():
+            matches_from_site.append(i)
     except:
         pass
 
     with connect('aboba.db') as db:
         cur = db.cursor()
-        flag = False
-        user = message.from_user.first_name
+        a = cur.execute('SELECT matches FROM users')
+        a = a.fetchall()
+        db = list()
 
-        z = cur.execute(f'SELECT matches, {user} FROM users')
-        for i in z:
-            if i[1] != None:
-                flag = True
-            elif i[1] == None:
-                choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
-                left = types.InlineKeyboardButton(text='П1',
-                                                  callback_data='p1')
-                right = types.InlineKeyboardButton(text='П2',
-                                                   callback_data='p2')
-                drow = types.InlineKeyboardButton(text='X',
-                                                  callback_data='x')
-                choice_keyboard.add(left, drow, right)
-                bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
-                flag = False
+        for i in a:
+            for j in i:
+                db.append(j)
 
-    if flag:
-        bot.send_message(message.chat.id, 'Ставки сделаны!\nСтавок больше нет!')
+        for i in matches_from_site:
+            if i not in db:
+                cur.execute(f"INSERT INTO users (matches) VALUES ('{i}')")
 
+    # если в строке матча не будет ставки - выводит матч
     with connect('aboba.db') as db:
         cur = db.cursor()
+        flag = False
         user = message.from_user.first_name
+        cur.execute(f"SELECT matches, {user} FROM users")
+        db_matches = cur.fetchall()
+
+        for i in db_matches:
+            if i[0] in matches_from_site:
+                if i[1] == None:
+                    choice_keyboard = types.InlineKeyboardMarkup(row_width=3)
+                    left = types.InlineKeyboardButton(text='П1',
+                                                      callback_data='p1')
+                    right = types.InlineKeyboardButton(text='П2',
+                                                       callback_data='p2')
+                    drow = types.InlineKeyboardButton(text='X',
+                                                      callback_data='x')
+                    choice_keyboard.add(left, drow, right)
+                    bot.send_message(message.chat.id, i, reply_markup=choice_keyboard)
+                    flag = False
+                elif i[1] != None:
+                    flag = True
+            else:
+                flag = True
+
+        if flag:
+            bot.send_message(message.chat.id, 'Ставки сделаны!\nСтавок больше нет!')
 
         points = cur.execute(f"SELECT score FROM points WHERE name == '{user}'")
         for i in points:
