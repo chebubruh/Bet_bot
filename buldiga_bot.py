@@ -9,7 +9,7 @@ bot = TeleBot(config.TOKEN)
 
 
 def parse_matches():
-    url = 'https://game-tournaments.com/dota-2/matches?tid=7354'
+    url = 'https://en.game-tournaments.com/dota-2/international-2022'
 
     r = get(url, headers=config.HEADERS)
 
@@ -53,7 +53,7 @@ def parse_matches():
 
 
 def parse_matches_res():
-    url = 'https://game-tournaments.com/dota-2/matches?tid=7354'
+    url = 'https://en.game-tournaments.com/dota-2/international-2022'
 
     r = get(url, headers=config.HEADERS)
 
@@ -73,7 +73,7 @@ def parse_matches_res():
 
 
 def parse_matches_past():
-    url = 'https://game-tournaments.com/dota-2/matches?tid=7354'
+    url = 'https://en.game-tournaments.com/dota-2/international-2022'
 
     r = get(url, headers=config.HEADERS)
 

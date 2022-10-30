@@ -2,3 +2,5 @@ config.py
 /__pycache__
 aboba.db
 aboba.db-journal
+aboba (старый).db
+aboba старый старый.db
